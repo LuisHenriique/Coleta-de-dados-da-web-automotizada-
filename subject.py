@@ -3,12 +3,12 @@ from typing import List
 
 @dataclass
 class Subject:
-    code: int # código
+    code: str # código
     nameSubject: str # nome da disciplina
-    creditsClass: int # créditos aulas
-    creditsWorkClass: int = 0 # crédito trabalho
-    workload: int  = 0 # carga horária
-    internshipWorkload: int =  0 # carga horária de estágio
-    workloadOfPraticalComponentsCurriculares: int =  0# carga horária de Práticas como Componentes Curriculares
-    activitiesTheoryPraticalsAprofundamento: int = 0# atividades Teórico-Práticas de Aprofundamento
+    creditsClass: str # créditos aulas
+    creditsWorkClass: str # crédito trabalho
+    workload: str  # carga horária
+    internshipWorkload: str # carga horária de estágio
+    workloadOfPraticalComponentsCurriculares: str # carga horária de Práticas como Componentes Curriculares
+    activitiesTheoryPraticalsAprofundamento: str # atividades Teórico-Práticas de Aprofundamento
 

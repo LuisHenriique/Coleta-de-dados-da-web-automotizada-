@@ -24,4 +24,4 @@ class Course:
             self.listOfOptionalFreeSubjects.append(subject)
 
     def status(self):
-        print(f"Nome do curso: {self.majorName}\nUnidade: {self.unitCampus}\nDuração ideal: {self.idealDuration}\nDuração mínima: {self.minDuration}\nDuração máxima:{self.maxDuration}")
+        print(f"Nome do curso: {self.majorName} -- Unidade: {self.unitCampus} --  Duração ideal: {self.idealDuration} -- Duração mínima: {self.minDuration} -- Duração máxima:{self.maxDuration}\n")
