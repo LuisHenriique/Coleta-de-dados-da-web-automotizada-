@@ -1,29 +1,93 @@
-from dataclasses import dataclass
 
 from selenium.common import TimeoutException
+
+from course import Course
 
 """Minhas classes """
 from unit import Unit
 from subject import Subject
-from course import Coursedriver.implicitly_wait(25)  # seconds
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from bs4 import BeautifulSoup
+from bs4.element import Tag
 import time
 
 i = 0
 j = 0
-# Coleta de dados da página web
-# vai pra o navegador
-driver = webdriver.Chrome()
 
-# vai para o link abaixo
-driver.get("https://uspdigital.usp.br/jupiterweb/jupCarreira.jsp?codmnu=8275")
 
-# aguarda o site carregar completamente
-time.sleep(5)
+def processar_tabela(tabela: Tag):
+    """
+    Processa uma única tabela HTML do BeautifulSoup
+
+    """
+    if not isinstance(tabela, Tag):
+        raise TypeError("O argumento deve ser um objeto bs4.element.Tag")
+
+    # pega as linhas da tabela atual
+    rows = tabela.find_all('tr', style=lambda s: s and "height: 20px" in s and "background-color" not in s)
+
+    if not rows:
+        raise ValueError("Nenhuma linha válida encontrada na tabela")
+
+    # seleciona uma linha das linhas
+    for row in rows:
+        # procura as colunas da linha
+        cells = row.find_all('td')
+
+        if len(cells) >= 8:  # Ajuste conforme o número de colunas esperado
+            codeSubject = cells[0].get_text(strip=True)
+            nameSubject = cells[1].get_text(strip=True)
+            credtSub = cells[2].get_text(strip=True)
+            credTrab = cells[3].get_text(strip=True)
+            ch = cells[4].get_text(strip=True)
+            ce = cells[5].get_text(strip=True)
+            cp = cells[6].get_text(strip=True)
+            atpa = cells[7].get_text(strip=True)
+
+            print(f"\nCódigo: {codeSubject}")
+            print(f"Disciplina: {nameSubject}")
+            print(f"Créditos: {credtSub}")
+            print(f"Créditos Trabalho: {credTrab}")
+            print(f"Carga Horária: {ch}")
+            print(f"CE: {ce}")
+            print(f"CP: {cp}")
+            print(f"ATPA: {atpa}")
+
+
+
+def setup_driver():
+    """Configura o driver com opções para melhor estabilidade"""
+    options = webdriver.ChromeOptions()
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')  # Evita problemas de memória
+    options.add_argument('--start-maximized')  # Maximiza a janela
+    options.add_argument('--disable-extensions')
+    return webdriver.Chrome(options=options)
+
+# Inicializa o driver com timeout configurado
+driver = setup_driver()
+driver.set_page_load_timeout(35)  # Timeout de 35 segundos para carregar a página
+
+url = "https://uspdigital.usp.br/jupiterweb/jupCarreira.jsp?codmnu=8275"
+
+try:
+   #acessar url
+    driver.get(url)
+
+    # Espera por um elemento específico que indica que a página carregou
+    WebDriverWait(driver, 30).until(
+        EC.presence_of_element_located((By.ID, "comboUnidade"))
+    )
+except TimeoutException:
+    # Se houver erros, tenta recarregar a página
+    driver.refresh()
+    WebDriverWait(driver, 30).until(
+        EC.presence_of_element_located((By.ID, "comboUnidade"))
+    )
 
 selectUnits = Select(driver.find_element(By.ID, "comboUnidade"))
 
@@ -59,29 +123,83 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
         searchButtonOne = driver.find_element(By.ID, "enviar")
         searchButtonOne.click()
 
-        WebDriverWait(driver, 7).until(EC.presence_of_element_located((By.ID, "step4-tab")))
+        WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.ID, "tabs")))
 
         try:  ## tentar achar o botão de grades
 
-            gradesCurriculum = WebDriverWait(driver, 7).until(
+            # Espera o overlay de carregamento sumir
+            WebDriverWait(driver, 15).until(
+                EC.invisibility_of_element_located((By.CLASS_NAME, "blockUI"))
+            )
+
+            # Só então tenta clicar na aba de grades
+            gradesCurriculum = WebDriverWait(driver, 15).until(
                 EC.element_to_be_clickable((By.ID, "step4-tab"))
             )
 
             gradesCurriculum.click()
-            time.sleep(1)
+
+            # após clicar no gradesCurricular no navegationBar espera alguns segundos para ler os dados presentes lá
+            WebDriverWait(driver, 15).until(
+                EC.presence_of_element_located((By.ID, "gradeCurricular"))
+            )
+
         except:
             # se não achou procura o botão de voltar
-            closeButton = WebDriverWait(driver, 10).until(
+            closeButton = WebDriverWait(driver, 30).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[.//text()='Fechar']"))
             )
             closeButton.click()
-            time.sleep(0.5)
+            time.sleep(1)
 
-        # usa o beautiful para ler baixar a página web
+
+        # obtém o conteúdo html da página
+        page_content = driver.page_source
+
+        # cria um objeto beautifulSoup
+        soup = BeautifulSoup(page_content, 'html.parser')
+
+        # captura os dados de duração do curso
+        durationIdeal= soup.find('span', class_="duridlhab").get_text(strip=True)
+        durationMin= soup.find('span', class_="durminhab").get_text(strip=True)
+        durationMax= soup.find('span', class_="durmaxhab").get_text(strip=True)
+
+        courseTest = Course(courseName, unitName, int(durationIdeal), int(durationMin), int(durationMax))
+
+        # captura informações da div  que contém as tabelas de disciplinas
+        divGradeCurricular = soup.find('div', id= "gradeCurricular")
+        # seleciona todas as tabelas presentes na div gradeCurricular, obtenho uma lista de tabelas
+        tables = divGradeCurricular.find_all('table')
+
+        courseTest.status()
+
+        #raspando os dados das linhas(tr) da  tabela 1 que tenham esse style
+        for table in tables:
+            processar_tabela(table)
+
+        time.sleep(2)
 
         # retorna para aba buscar
-        searchButtonTwo = driver.find_element(By.ID, "step1-tab")
-        searchButtonTwo.click()
+        # Por isto:
+        try:
+            # Espera até que a sobreposição desapareça (máximo 40 segundos)
+            searchButtonTwo =  WebDriverWait(driver, 40).until(
+                EC.element_to_be_clickable((By.ID, "step1-tab"))
+            )
 
+            # Tenta clicar novamente
+            searchButtonTwo.click()
+
+        except TimeoutException:
+            # Fallback: Recarrega a página e tenta novamente
+            driver.refresh()
+            searchButtonTwo = WebDriverWait(driver, 30).until(
+                EC.element_to_be_clickable((By.ID, "step1-tab"))
+            )
+
+            searchButtonTwo.click()
+        time.sleep(0.5)
+
+driver.quit()
 print(f"numeros de unidades:{i}")
 print(f"numeros de cursos{j}")

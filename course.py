@@ -1,12 +1,27 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List
 from subject import Subject
 
+@dataclass
 class Course:
     majorName: str # nome do curso
     unitCampus: str # Unidade
     idealDuration: int # duração ideal
     minDuration: int # duração mínima
     maxDuration: int # duração máxima
-    listOfMandatorySubjects:list[Subject] # lista de disciplinas obrigatórias
-    listOfOptionalFreeSubjects:list[Subject] # lista de disciplinas Optativas livres
-    listOfOptinalEletivasSubjects : list [Subject] # lista de disciplinas optativas eletivas
+    listOfMandatorySubjects: List[Subject] = field(default_factory=list) # lista de disciplinas obrigatórias (inicializadas vazia)
+    listOfOptionalFreeSubjects: List[Subject] = field(default_factory=list) # lista de disciplinas Optativas livres (inicializadas vazia)
+    listOfOptinalEletivasSubjects: List[Subject] = field(default_factory=list) # lista de disciplinas optativas eletivas (inicializadas vazia)
+
+
+    def insert_subject(self, subject: Subject , type):
+        """Add uma disciplina obrigatori"""
+        if(type == "Disciplinas Obrigatórias"):
+            self.listOfMandatorySubjects.append(subject)
+        elif(type == "Disciplinas Optativas Eletivas"):
+            self.listOfOptinalEletivasSubjects.append(subject)
+        else:
+            self.listOfOptionalFreeSubjects.append(subject)
+
+    def status(self):
+        print(f"Nome do curso: {self.majorName}\nUnidade: {self.unitCampus}\nDuração ideal: {self.idealDuration}\nDuração mínima: {self.minDuration}\nDuração máxima:{self.maxDuration}")
