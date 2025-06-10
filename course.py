@@ -6,9 +6,9 @@ from subject import Subject
 class Course:
     majorName: str # nome do curso
     unitCampus: str # Unidade
-    idealDuration: int # duração ideal
-    minDuration: int # duração mínima
-    maxDuration: int # duração máxima
+    idealDuration: str # duração ideal
+    minDuration: str # duração mínima
+    maxDuration: str # duração máxima
     listOfMandatorySubjects: List[Subject] = field(default_factory=list) # lista de disciplinas obrigatórias (inicializadas vazia)
     listOfOptionalFreeSubjects: List[Subject] = field(default_factory=list) # lista de disciplinas Optativas livres (inicializadas vazia)
     listOfOptinalEletivasSubjects: List[Subject] = field(default_factory=list) # lista de disciplinas optativas eletivas (inicializadas vazia)

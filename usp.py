@@ -15,7 +15,6 @@ from bs4.element import Tag
 import time
 
 i = 0
-flag = 0
 j = 0
 
 
@@ -52,10 +51,10 @@ def processar_tabela(tabela: Tag):
             match indice:
                 case 0:
                     print("Disciplinas Obrigatórias")
-                    subjectsMan = Subject(codeSubject, nameSubject,credtSub, credTrab, ch, ce, cp, atpa)
+                    subjectsMan = Subject(codeSubject, nameSubject, credtSub, credTrab, ch, ce, cp, atpa)
                 case 1:
                     print("Disciplinas Optativas Livres")
-                    subjectsOpLiv = Subject(codeSubject, nameSubject,credtSub, credTrab, ch, ce, cp, atpa)
+                    subjectsOpLiv = Subject(codeSubject, nameSubject, credtSub, credTrab, ch, ce, cp, atpa)
 
                 case 2:
                     print("Disciplinas Optativas Eletivas")
@@ -75,10 +74,20 @@ def setup_driver():
     options.add_argument('--disable-extensions')
     return webdriver.Chrome(options=options)
 
+def button_buscar(driver):
+    searchButtonTwo = WebDriverWait(driver, 40).until(
+        EC.element_to_be_clickable((By.ID, "step1-tab"))
+    )
+
+    searchButtonTwo.click()
+
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.ID, "comboUnidade")))
+
 
 # Inicializa o driver com timeout configurado
 driver = setup_driver()
-driver.set_page_load_timeout(20)  # Timeout de 20 segundos para carregar a página
+driver.set_page_load_timeout(20)  # Timeout de 30 segundos para carregar a página
 
 url = "https://uspdigital.usp.br/jupiterweb/jupCarreira.jsp?codmnu=8275"
 
@@ -99,13 +108,16 @@ except TimeoutException:
 
 selectUnits = Select(driver.find_element(By.ID, "comboUnidade"))
 
+
 # Itera sobre TODAS as unidades (exceto a primeira que é vazia )
 
-        #remover 10
+
 for units in selectUnits.options[11:]:  # pula primeiro item da lista de options(lista de unidades)
 
     unitName = units.text
     unitValue = units.get_attribute("value")
+
+    print(f"Selecionando unidade: {unitName} (valor={unitValue})")
 
     # Seleciona a nova unidade
     selectUnits.select_by_value(unitValue)
@@ -117,13 +129,13 @@ for units in selectUnits.options[11:]:  # pula primeiro item da lista de options
     # Agora sim, re-obtem os cursos
     selectCourse = Select(driver.find_element(By.ID, "comboCurso"))
 
-    for course in selectCourse.options[7:]:  # pula primeiro item da lista de options(lista de cursos)
+    for course in selectCourse.options[1:]:  # pula primeiro item da lista de options(lista de cursos)
         courseName = course.text
         courseValue = course.get_attribute("value")
+        print(f"Selecionando curso: {courseName} (valor={courseValue})")
         selectCourse.select_by_value(courseValue)
         j += 1
         time.sleep(0.4)
-        print(f"Selecionando o curso: {courseName}")
 
         # Após ter selecionada o curso clica no butão buscar
         searchButtonOne = driver.find_element(By.ID, "enviar")
@@ -131,25 +143,22 @@ for units in selectUnits.options[11:]:  # pula primeiro item da lista de options
 
         WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.ID, "tabs")))
 
-        """Ao clicar no botão enviar ele tenta verificar se achou o navagationBar button grades curricular se não achar significa que o popup apareceu então clica no 
-        butão de fechar """
-        try:
+        try:  ## tentar achar o botão de grades
 
             # Espera o overlay de carregamento sumir
             WebDriverWait(driver, 15).until(
                 EC.invisibility_of_element_located((By.CLASS_NAME, "blockUI"))
             )
 
-            # Só então tenta clicar na aba de grades
             gradesCurriculum = WebDriverWait(driver, 15).until(
                 EC.element_to_be_clickable((By.ID, "step4-tab"))
             )
 
             gradesCurriculum.click()
-            # após ter entrada na aba de grades curriculares, espera certa de 2.5 segundos para sair dela
-            time.sleep(2)
 
-            ## Se ocorrer tudo bem na tentiva de clicar em grades curricular executa codigo abaixo
+            # após ter entrada na aba de grades curriculares, espera certa de 2 segundos para sair dela
+            time.sleep(2.5)
+
             # obtém o conteúdo html da página
             page_content = driver.page_source
 
@@ -161,51 +170,32 @@ for units in selectUnits.options[11:]:  # pula primeiro item da lista de options
             durationMin = soup.find('span', class_="durminhab").get_text(strip=True)
             durationMax = soup.find('span', class_="durmaxhab").get_text(strip=True)
 
-            courseContent = Course(courseName, unitName, durationIdeal, durationMin, durationMax)
-            courseContent.status()
+            courseTest = Course(courseName, unitName, durationIdeal, durationMin, durationMax)
 
-            # captura informações da div  que contém as tabelas de disciplinas
-            divGradeCurricular = soup.find('div', id="gradeCurricular")
-
-            # seleciona todas as tabelas presentes na div gradeCurricular, obtenho uma lista de tabelas
-            tables = divGradeCurricular.find_all('table')
-
-            # raspando os dados das linhas(tr) da  tabela 1 que tenham esse style
-            if len(tables) >0:
-              for table in tables:
-                processar_tabela(table)
-
-            time.sleep(2)
-
-            # retorna para aba buscar
             try:
-                # Espera até que o botão fique desponível para clicar  (máximo 40 segundos)
-                searchButtonTwo = WebDriverWait(driver, 40).until(
-                    EC.element_to_be_clickable((By.ID, "step1-tab"))
-                )
+                # verifica se o primeiro  os links presentes na tabela de disciplinas está disponível, se não estiver cai no execept
+                linksDisciplina = soup.find_all("a", class_="disciplina")
 
-                # Tenta clicar
-                searchButtonTwo.click()
+                # captura informações da div  que contém as tabelas de disciplinas
+                divGradeCurricular = soup.find('div', id="gradeCurricular")
+                # seleciona todas as tabelas presentes na div gradeCurricular, obtenho uma lista de tabelas
+                tables = divGradeCurricular.find_all('table')
 
-                # Espera até a combo de unidade aparecer novamente
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.ID, "comboUnidade"))
-                )
+                courseTest.status()
 
-                # Atualiza o select de unidades e cursos
-                #selectUnits = Select(driver.find_element(By.ID, "comboUnidade"))
+                # raspando os dados das linhas(tr) da  tabela 1 que tenham esse style
+
+                for table in tables:
+                    processar_tabela(table)
+                time.sleep(2)
+            except:
+                print("Erro ao tentar processar tabela de disciplinas ")
+            finally:
+
+                button_buscar(driver)
 
 
-            except TimeoutException:
-                # Fallback: Recarrega a página e tenta novamente
-                driver.refresh()
-                searchButtonTwo = WebDriverWait(driver, 30).until(
-                    EC.element_to_be_clickable((By.ID, "step1-tab"))
-                )
 
-                searchButtonTwo.click()
-                time.sleep(0.5)
-            # time.sleep(3)
         except:
             # se não achou procura o botão de voltar
             closeButton = WebDriverWait(driver, 30).until(
@@ -213,6 +203,8 @@ for units in selectUnits.options[11:]:  # pula primeiro item da lista de options
             )
             closeButton.click()
             time.sleep(1)
+
+
 
 driver.quit()
 print(f"numeros de unidades:{i}")
