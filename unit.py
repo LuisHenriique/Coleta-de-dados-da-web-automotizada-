@@ -44,25 +44,53 @@ class Unit:
         for course in self.courses:
             matches = True
 
-            if 'unitName' in filters and course.unitCampus != filters['unitName']:
-                matches = False
+            """
+            Todos os filtros a qual contém strings tals como:  (unitName, courseName, subjectCode, subjectName)
+            usam .strip().lower() para normalizar as comparações ou seja retirando espaços e deixando tudo minúsculo
+            e realizamos a comparação usando o in ou seja permitindo que apenas um trecho do texto já seja suficiente para considerar como correspondência.
+            exemplo: busco "marketing"
+            porém o nome do curso é Marketing - Integral 
+            irar dar match normalmente, bastando que apenas que o será buscado esteja contido no cursoName
+            """
 
-            if 'courseName' in filters and course.majorName != filters['courseName']:
-                matches = False
 
-            if 'minDuration' in filters and int(course.minDuration) < filters['minDuration']:
-                matches = False
 
-            if 'maxDuration' in filters and int(course.maxDuration) > filters['maxDuration']:
-                matches = False
-
-            if 'subjectCode' in filters:
-                if not any(subj.code == filters['subjectCode'] for subj in course.get_all_subjects()):
+            # Filtro por nome da unidade (unitName)
+            if 'unitName' in filters:
+                filter_unit = filters['unitName'].strip().lower()
+                course_unit = course.unitCampus.strip().lower()
+                if filter_unit not in course_unit:
                     matches = False
 
+            # Filtro por nome do curso (courseName)
+            if 'courseName' in filters:
+                filter_name = filters['courseName'].strip().lower()
+                course_name = course.majorName.strip().lower()
+                if filter_name not in course_name:
+                    matches = False
 
+            # Filtro por duração mínima
+            if 'minDuration' in filters:
+                if int(course.minDuration) < filters['minDuration']:
+                    matches = False
+
+            # Filtro por duração máxima
+            if 'maxDuration' in filters:
+                if int(course.maxDuration) > filters['maxDuration']:
+                    matches = False
+
+            # Filtro por código da disciplina (subjectCode)
+            if 'subjectCode' in filters:
+                filter_code = filters['subjectCode'].strip().lower()
+                subject_codes = [subj.code.strip().lower() for subj in course.get_all_subjects()]
+                if not any(filter_code in code for code in subject_codes):
+                    matches = False
+
+            # Filtro por nome da disciplina (subjectName)
             if 'subjectName' in filters:
-                if not any(subj.nameSubject == filters['subjectName'] for subj in course.get_all_subjects()):
+                filter_subject = filters['subjectName'].strip().lower()
+                subject_names = [subj.nameSubject.strip().lower() for subj in course.get_all_subjects()]
+                if not any(filter_subject in name for name in subject_names):
                     matches = False
 
             if matches:

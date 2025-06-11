@@ -41,6 +41,8 @@ class Course:
        # Retorna disciplinas a depender do filtro encaminhado pelo usuário
 
 
+
+    #Função auxiliar que imprime os dados das disciplinas
     def print_data_subjects(self, listSubjects):
         # se a lista não estive vazia
         if listSubjects:
