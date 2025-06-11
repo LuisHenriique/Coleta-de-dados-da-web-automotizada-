@@ -13,5 +13,3 @@ class Subject:
     atpa: str # atividades Teórico-Práticas de Aprofundamento
 
 
-    def status(self):
-        print(f"Código: {self.code} -- Disciplina: {self.nameSubject} -- Créditos: {self.creditsClass} -- Créditos Trabalho: {self.creditsWorkClass} -- Carga Horária: {self.workload} -- CE: {self.internshipWorkload} -- CP: {self.workloadOfPracticalComponentsCurriculares} --     ATPA: {self.atpa}")

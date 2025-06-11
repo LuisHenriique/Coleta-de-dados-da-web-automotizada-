@@ -13,9 +13,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 import time
+import functionsUSP
 
-i = 0
-j = 0
 
 
 def processar_tabela(tabela: Tag, course):
@@ -34,14 +33,10 @@ def processar_tabela(tabela: Tag, course):
 
     flagDisciplina = 0
     if (table.find(string="Disciplinas Obrigatórias")):
-        print("\n#################333Disciplinas Obrigatórias#####################\n")
         flagDisciplina = 1
     elif (table.find(string="Disciplinas Optativas Livres")):
-        print("\n#####################Disciplinas Optativas Livres#####################\n")
         flagDisciplina = 2
-
     if (table.find(string="Disciplinas Optativas Eletivas")):
-        print("\n#####################Disciplinas Optativas Eletivas#####################\n")
         flagDisciplina = 3
 
     for row in rows:
@@ -62,7 +57,7 @@ def processar_tabela(tabela: Tag, course):
 
             course.insert_subject(subjectRead, flagDisciplina)
 
-            subjectRead.status()
+
 
 
 def setup_driver():
@@ -83,6 +78,16 @@ def button_buscar(driver):
 
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, "comboUnidade")))
+
+
+
+# Ler a quantidade de unidades que serão lidas
+quantityUnits = 0
+input(quantityUnits)
+
+
+# Lista global para armazenar todas as unidades
+all_units = []
 
 
 # Inicializa o driver com timeout configurado
@@ -111,17 +116,24 @@ selectUnits = Select(driver.find_element(By.ID, "comboUnidade"))
 
 # Itera sobre TODAS as unidades (exceto a primeira que é vazia )
 
-
 for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(lista de unidades)
-
+    # Para o loop se a quantidade unidades para serem lidas foram atingidas
+    if quantityUnits == 0:
+        break
     unitName = units.text
     unitValue = units.get_attribute("value")
+
+    #Cria instância do objeto unidade e insere a unidade lista de unidades
+    current_unit = Unit(name=unitName)
+    all_units.append(current_unit)
+
+
 
     print(f"Selecionando unidade: {unitName} (valor={unitValue})")
 
     # Seleciona a nova unidade
     selectUnits.select_by_value(unitValue)
-    i += 1
+
     # Espera até o número de cursos mudar — isso garante que os cursos novos carregaram
     WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.ID, "comboCurso")))
     time.sleep(0.4)
@@ -134,7 +146,7 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
         courseValue = course.get_attribute("value")
         print(f"Selecionando curso: {courseName} (valor={courseValue})")
         selectCourse.select_by_value(courseValue)
-        j += 1
+
         time.sleep(0.4)
 
         # Após ter selecionada o curso clica no butão buscar
@@ -173,7 +185,7 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
 
 
             # criação da instância do objeto Curso
-            course = Course(courseName, unitName, durationIdeal, durationMin, durationMax)
+            course = Course(courseName, unitName, int(durationIdeal), int(durationMin), int(durationMax))
 
             try:
                 # verifica se o primeiro  os links presentes na tabela de disciplinas está disponível, se não estiver cai no execept
@@ -184,7 +196,6 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
                 # seleciona todas as tabelas presentes na div gradeCurricular, obtenho uma lista de tabelas
                 tables = divGradeCurricular.find_all('table')
 
-                course.status()
 
                 # raspando os dados das linhas(tr) da  tabela 1 que tenham esse style
 
@@ -194,6 +205,8 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
             except:
                 print("Erro ao tentar processar tabela de disciplinas ")
             finally:
+                #imprime o estado atual do course
+                course.status()
 
                 #Procura o botão de buscar e clica nele
                 button_buscar(driver)
@@ -205,15 +218,17 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
             )
             closeButton.click()
             time.sleep(1)
-        #finally:
-            # adicionando o curso na lista de cursos da classe
 
-            #unitInstance.insert_course()
+        finally:
+            #insere os cursos na lista de cursos da unidade respectiva
+            current_unit.add_courses(course)
+
+    # decrementa a quantidade de unidades
+    quantityUnits-=1
 
 
-
-
-
+#Finaliza o webScraping
 driver.quit()
-print(f"numeros de unidades:{i}")
-print(f"numeros de cursos{j}")
+
+
+
