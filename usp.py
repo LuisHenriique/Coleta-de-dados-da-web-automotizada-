@@ -18,7 +18,7 @@ i = 0
 j = 0
 
 
-def processar_tabela(tabela: Tag):
+def processar_tabela(tabela: Tag, course):
     """
     Processa uma única tabela HTML do BeautifulSoup
 
@@ -31,8 +31,18 @@ def processar_tabela(tabela: Tag):
 
     if not rows:
         raise ValueError("Nenhuma linha válida encontrada na tabela")
-    indice = 0  # variavel auxiliar para saber qual é a tabela que estamos trabalhando
-    # seleciona uma linha das linhas
+
+    flagDisciplina = 0
+    if (table.find(string="Disciplinas Obrigatórias")):
+        print("\n#################333Disciplinas Obrigatórias#####################\n")
+        flagDisciplina = 1
+    elif (table.find(string="Disciplinas Optativas Livres")):
+        print("\n#####################Disciplinas Optativas Livres#####################\n")
+        flagDisciplina = 2
+
+    if (table.find(string="Disciplinas Optativas Eletivas")):
+        print("\n#####################Disciplinas Optativas Eletivas#####################\n")
+        flagDisciplina = 3
 
     for row in rows:
         # procura as colunas da linha
@@ -41,28 +51,18 @@ def processar_tabela(tabela: Tag):
         if len(cells) >= 8:  # Ajuste conforme o número de colunas esperado
             codeSubject = cells[0].get_text(strip=True)
             nameSubject = cells[1].get_text(strip=True)
-            credtSub = cells[2].get_text(strip=True)
-            credTrab = cells[3].get_text(strip=True)
-            ch = cells[4].get_text(strip=True)
-            ce = cells[5].get_text(strip=True)
-            cp = cells[6].get_text(strip=True)
-            atpa = cells[7].get_text(strip=True)
+            creditClass = cells[2].get_text(strip=True) or "0"
+            credTrab = cells[3].get_text(strip=True) or "0"
+            ch = cells[4].get_text(strip=True) or "0"
+            ce = cells[5].get_text(strip=True) or "0"
+            cp = cells[6].get_text(strip=True) or "0"
+            atpa = cells[7].get_text(strip=True) or "0"
+            subjectRead = Subject(codeSubject, nameSubject, creditClass, credTrab, ch, ce, cp, atpa)
 
-            match indice:
-                case 0:
-                    print("Disciplinas Obrigatórias")
-                    subjectsMan = Subject(codeSubject, nameSubject, credtSub, credTrab, ch, ce, cp, atpa)
-                case 1:
-                    print("Disciplinas Optativas Livres")
-                    subjectsOpLiv = Subject(codeSubject, nameSubject, credtSub, credTrab, ch, ce, cp, atpa)
 
-                case 2:
-                    print("Disciplinas Optativas Eletivas")
-                    subjectsOpEl = Subject(codeSubject, nameSubject, credtSub, credTrab, ch, ce, cp, atpa)
+            course.insert_subject(subjectRead, flagDisciplina)
 
-            print(
-                f"\nCódigo: {codeSubject} -- Disciplina: {nameSubject} -- Créditos: {credtSub} -- Créditos Trabalho: {credTrab} -- Carga Horária: {ch} -- CE: {ce} -- CP: {cp} --     ATPA: {atpa}\n")
-            indice += 1
+            subjectRead.status()
 
 
 def setup_driver():
@@ -87,7 +87,7 @@ def button_buscar(driver):
 
 # Inicializa o driver com timeout configurado
 driver = setup_driver()
-driver.set_page_load_timeout(20)  # Timeout de 30 segundos para carregar a página
+driver.set_page_load_timeout(25)  # Timeout de 30 segundos para carregar a página
 
 url = "https://uspdigital.usp.br/jupiterweb/jupCarreira.jsp?codmnu=8275"
 
@@ -96,13 +96,13 @@ try:
     driver.get(url)
 
     # Espera por um elemento específico que indica que a página carregou
-    WebDriverWait(driver, 20).until(
+    WebDriverWait(driver, 25).until(
         EC.presence_of_element_located((By.ID, "comboUnidade"))
     )
 except TimeoutException:
     # Se houver erros, tenta recarregar a página
     driver.refresh()
-    WebDriverWait(driver, 20).until(
+    WebDriverWait(driver, 25).until(
         EC.presence_of_element_located((By.ID, "comboUnidade"))
     )
 
@@ -112,7 +112,7 @@ selectUnits = Select(driver.find_element(By.ID, "comboUnidade"))
 # Itera sobre TODAS as unidades (exceto a primeira que é vazia )
 
 
-for units in selectUnits.options[11:]:  # pula primeiro item da lista de options(lista de unidades)
+for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(lista de unidades)
 
     unitName = units.text
     unitValue = units.get_attribute("value")
@@ -141,6 +141,7 @@ for units in selectUnits.options[11:]:  # pula primeiro item da lista de options
         searchButtonOne = driver.find_element(By.ID, "enviar")
         searchButtonOne.click()
 
+        # Cria uma instância do objeto unidade
         WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.ID, "tabs")))
 
         try:  ## tentar achar o botão de grades
@@ -170,7 +171,9 @@ for units in selectUnits.options[11:]:  # pula primeiro item da lista de options
             durationMin = soup.find('span', class_="durminhab").get_text(strip=True)
             durationMax = soup.find('span', class_="durmaxhab").get_text(strip=True)
 
-            courseTest = Course(courseName, unitName, durationIdeal, durationMin, durationMax)
+
+            # criação da instância do objeto Curso
+            course = Course(courseName, unitName, durationIdeal, durationMin, durationMax)
 
             try:
                 # verifica se o primeiro  os links presentes na tabela de disciplinas está disponível, se não estiver cai no execept
@@ -181,20 +184,19 @@ for units in selectUnits.options[11:]:  # pula primeiro item da lista de options
                 # seleciona todas as tabelas presentes na div gradeCurricular, obtenho uma lista de tabelas
                 tables = divGradeCurricular.find_all('table')
 
-                courseTest.status()
+                course.status()
 
                 # raspando os dados das linhas(tr) da  tabela 1 que tenham esse style
 
                 for table in tables:
-                    processar_tabela(table)
+                    processar_tabela(table, course)
                 time.sleep(2)
             except:
                 print("Erro ao tentar processar tabela de disciplinas ")
             finally:
 
+                #Procura o botão de buscar e clica nele
                 button_buscar(driver)
-
-
 
         except:
             # se não achou procura o botão de voltar
@@ -203,6 +205,12 @@ for units in selectUnits.options[11:]:  # pula primeiro item da lista de options
             )
             closeButton.click()
             time.sleep(1)
+        #finally:
+            # adicionando o curso na lista de cursos da classe
+
+            #unitInstance.insert_course()
+
+
 
 
 
