@@ -25,7 +25,7 @@ class Unit:
                 
                 # Dentro desta função, filters será:
                 # {'unitName': 'IME', 'minDuration': 4}
-
+add_courses
 
             Busca curso com filtros flexíveis.
 
@@ -56,38 +56,38 @@ class Unit:
 
 
             # Filtro por nome da unidade (unitName)
-            if 'unitName' in filters:
+            if 'unitName' in filters  and filters['unitName'] is not None:
                 filter_unit = filters['unitName'].strip().lower()
                 course_unit = course.unitCampus.strip().lower()
                 if filter_unit not in course_unit:
                     matches = False
 
             # Filtro por nome do curso (courseName)
-            if 'courseName' in filters:
+            if 'courseName' in filters  and filters['courseName'] is not None:
                 filter_name = filters['courseName'].strip().lower()
                 course_name = course.majorName.strip().lower()
                 if filter_name not in course_name:
                     matches = False
 
             # Filtro por duração mínima
-            if 'minDuration' in filters:
+            if 'minDuration' in filters and filters['minDuration']  is not None:
                 if int(course.minDuration) < filters['minDuration']:
                     matches = False
 
             # Filtro por duração máxima
-            if 'maxDuration' in filters:
+            if 'maxDuration' in filters  and filters['maxDuration'] is not None:
                 if int(course.maxDuration) > filters['maxDuration']:
                     matches = False
 
             # Filtro por código da disciplina (subjectCode)
-            if 'subjectCode' in filters:
+            if 'subjectCode' in filters and filters['subjectCode']  is not None:
                 filter_code = filters['subjectCode'].strip().lower()
                 subject_codes = [subj.code.strip().lower() for subj in course.get_all_subjects()]
                 if not any(filter_code in code for code in subject_codes):
                     matches = False
 
             # Filtro por nome da disciplina (subjectName)
-            if 'subjectName' in filters:
+            if 'subjectName' in filters and filters['subjectName']   is not None:
                 filter_subject = filters['subjectName'].strip().lower()
                 subject_names = [subj.nameSubject.strip().lower() for subj in course.get_all_subjects()]
                 if not any(filter_subject in name for name in subject_names):

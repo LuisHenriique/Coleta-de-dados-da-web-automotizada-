@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 from subject import Subject
 
+
+
 @dataclass
 class Course:
     majorName: str # nome do curso
@@ -37,8 +39,86 @@ class Course:
         """Retorna todas as disciplinas do curso"""
         return (self.listOfMandatorySubjects + self.listOfOptionalElectiveSubjects + self.listOfOptionalFreeSubjects)
 
-    #def get_subjects(self, **filters) -> List[Subject]:
-       # Retorna disciplinas a depender do filtro encaminhado pelo usuário
+
+    def get_subject_of_list(self, listOfSubjects, **filters) -> Optional[Subject]:
+        """Função que dado uma lista de disciplinas retorna uma disciplina que bateu com os critérios do filtro"""
+        """
+                   Todos os filtros a qual contém strings 
+        """
+
+
+        if listOfSubjects:
+            for subject in listOfSubjects:
+                matches = True
+
+
+                # Filtro por código das disciplinas
+                if 'code' in filters  is not None:
+                    filterCode = filters['code'].strip().lower()
+                    subjectTest  = subject.code.strip().lower()
+                    if filterCode not in subjectTest:
+                        matches = False
+
+
+
+                if 'nameSubject' in filters  and filters['nameSubject'] is not None:
+                    filterNameSubject = filters['nameSubject'].strip().lower()
+                    subjectName = subject.nameSubject.strip().lower()
+                    if filterNameSubject not in subjectName:
+                        matches = False
+
+                if 'creditsClass' in filters  and filters['creditsClass']  is not None:
+                    if int(subject.creditsClass) < filters['creditsClass']:
+                        matches = False
+                if 'ch' in filters   and filters['ch'] is not None:
+                    if int(subject.ch) < filters['ch']:
+                        matches = False
+                if 'ce' in filters  and filters['ce'] is not None:
+                    if int(subject.ce) < filters['ce']:
+                        matches = False
+                if 'cp' in filters  and filters['cp'] is not None:
+                    if int(subject.cp) < filters['cp']:
+                        matches = False
+                if 'atpa' in filters  and filters['atpa']  is not None:
+                    if int(subject.atpa) < filters['atpa']:
+                        matches = False
+
+                if matches:
+                    return  subject
+
+            #retorna a disciplina que atendeu os critérios do filtro
+
+        return None
+
+
+    def get_subjects(self, **filters) -> Optional[Subject]:
+        """Retorna disciplinas a depender do filtro encaminhado pelo usuário"""
+        """   - filters será um dicionário com todos os argumentos nomeados
+             
+            Busca disciplinas com filtros flexíveis.
+            
+            Filtros disponíveis:
+            code: str
+            nameSubject: str
+            creditClass: str 
+            ch: str 
+            ce: str
+            cp: str
+            atpa: str
+        """
+
+        matchingSubject = None
+
+        # armazeno em matchingSubject o valor retornado de uma das chamadas, pois uma disciplina não tem como ser
+        # obrigatório e eletiva ao mesmo tempo
+        matchingSubject = (
+                self.get_subject_of_list(self.listOfMandatorySubjects, **filters)
+                or self.get_subject_of_list(self.listOfOptionalElectiveSubjects, **filters)
+                or self.get_subject_of_list(self.listOfOptionalFreeSubjects, **filters)
+        )
+
+        return matchingSubject
+
 
 
 
@@ -47,12 +127,12 @@ class Course:
         # se a lista não estive vazia
         if listSubjects:
             for subj in listSubjects:
-                print(f"{subj.code} | {subj.nameSubject} | {subj.creditsClass} | {subj.creditsWorkClass} | {subj.workload} | {subj.internshipWorkload} | {subj.workloadOfPracticalComponentsCurriculares} | {subj.atpa}")
+                subj.status_subject()
             return
         print("Nenhuma disciplina encontrada")
 
 
-    def status(self) -> None:
+    def status_course(self) -> None:
         """Imprime informações do curso"""
 
         print(

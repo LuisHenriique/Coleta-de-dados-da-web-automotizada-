@@ -1,20 +1,20 @@
-from selenium.common import TimeoutException
 
-from course import Course
 import functionsUSP
 
 """Minhas classes """
 from unit import Unit
+from course import Course
+import functionsUSP
 from subject import Subject
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common import TimeoutException, WebDriverException
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 import time
-import functionsUSP
 
 
 
@@ -47,17 +47,16 @@ def processar_tabela(table: Tag, course):
         if len(cells) >= 8:  # Ajuste conforme o número de colunas esperado
             codeSubject = cells[0].get_text(strip=True)
             nameSubject = cells[1].get_text(strip=True)
-            creditClass = cells[2].get_text(strip=True) or "00"
-            credTrab = cells[3].get_text(strip=True) or "00"
-            ch = cells[4].get_text(strip=True) or "00"
-            ce = cells[5].get_text(strip=True) or "00"
-            cp = cells[6].get_text(strip=True) or "00"
-            atpa = cells[7].get_text(strip=True) or "00"
+            creditClass = cells[2].get_text(strip=True) or "0"
+            credTrab = cells[3].get_text(strip=True) or "0"
+            ch = cells[4].get_text(strip=True) or "0"
+            ce = cells[5].get_text(strip=True) or "0"
+            cp = cells[6].get_text(strip=True) or "0"
+            atpa = cells[7].get_text(strip=True) or "0"
             subjectRead = Subject(codeSubject, nameSubject, creditClass, credTrab, ch, ce, cp, atpa)
 
 
             course.insert_subject(subjectRead, flagDisciplina)
-
 
 
 
@@ -142,7 +141,7 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
     # Agora sim, re-obtem os cursos
     selectCourse = Select(driver.find_element(By.ID, "comboCurso"))
 
-    for course in selectCourse.options[7:]:  # pula primeiro item da lista de options(lista de cursos)
+    for course in selectCourse.options[1:]:  # pula primeiro item da lista de options(lista de cursos)
         courseName = course.text
         courseValue = course.get_attribute("value")
         print(f"Selecionando curso: {courseName} (valor={courseValue})")
@@ -208,12 +207,16 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
 
             finally:
                 #imprime o estado atual do course
-                course.status()
+                course.status_course()
 
                 #Procura o botão de buscar e clica nele
                 button_buscar(driver)
 
         except:
+
+            # criação da instância do objeto Curso apenas, pois ele não possui dados a mais.
+            course = Course(courseName, unitName)
+
             # se não achou procura o botão de voltar
             closeButton = WebDriverWait(driver, 30).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[.//text()='Fechar']"))
@@ -233,16 +236,13 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
 driver.quit()
 
 """Funcionalidades após a coleta de dados da web"""
-print("\n############Finalizado a coleta de dados, agora imprime o solicitado##################\n")
-#lista de cursos por unidade
-functionsUSP.print_all_courses(all_units)
+
+functionsUSP.menu_interative(all_units)
 
 
-# Dados de um determinado curso:
-functionsUSP.data_course(all_units, "marketing")
-print()
 
 
-#Dados de todos os cursos
-functionsUSP.data_all_courses(all_units)
-print()
+
+
+
+
