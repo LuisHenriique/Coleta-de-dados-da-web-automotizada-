@@ -82,11 +82,18 @@ def button_buscar(driver):
 
 
 # Ler a quantidade de unidades que serão lidas
-quantityUnits = int (input())
+while True:
+
+    try:
+        quantityUnits = int (input())
+        break
+    except ValueError:
+        print("Entrada inválida. Por favor, digite um número válido.")
 
 
 # Lista global para armazenar todas as unidades
 all_units = []
+
 
 
 # Inicializa o driver com timeout configurado
@@ -237,8 +244,128 @@ driver.quit()
 
 """Funcionalidades após a coleta de dados da web"""
 
-functionsUSP.menu_interative(all_units)
+while True:
+    print("\n" + "=" * 55)
+    print("Menu de Seleção:")
+    print("1. Listar cursos por unidade")
+    print("2. Dados de um determinado curso (com filtros um ou um conjunto deles: Nome do curso; Nome da unidade; Duração ideal; Duração mínima; Duração máxima; Código de disciplina; Nome de disciplina )")
+    print("3. Dados de todos os cursos")
+    print("4. Dados de uma determinada disciplina por filtro: (Código da disciplina; nome da disciplina; Crédito aulas; Carga horário; CH = Carga horária Total; CE = Carga horária de Estágio; CP = Carga horária de Práticas como Componentes Curriculares; ATPA = Atividades Teórico-Práticas de Aprofundamento) , inclusive quais cursos ela faz parte")
+    print("5. Ver disciplinas compartilhadas por mais de um curso")
+    print("6. Encerrar programa")
+    print("=" * 55)
 
+    opcao = input("Escolha uma opção: ")
+
+    match opcao:
+
+
+        case "1":
+            print("Executando a opção 1....")
+
+            print("\n--- Lista de cursos por unidades ---")
+            functionsUSP.print_all_courses(all_units)
+
+        case "2":
+            print("Executando a opção 2....")
+
+            print("\n--- Filtros do curso ---")
+            nome = input("Digite o nome do curso (ou deixe em branco): ").strip() or None
+            unidade = input("Digite a unidade do curso (ou deixe em branco): ").strip() or None
+
+            try:
+                minDur = int(input("Digite a duração mínima (ou 0 para ignorar): "))
+                minDur = minDur if minDur > 0 else None
+            except ValueError:
+                minDur = None
+
+            try:
+                maxDur = int(input("Digite a duração máxima (ou 0 para ignorar): "))
+                maxDur = maxDur if maxDur > 0 else None
+            except ValueError:
+                maxDur = None
+
+            try:
+                ideal = int(input("Digite a duração ideal (ou 0 para ignorar): "))
+                ideal = ideal if ideal > 0 else None
+            except ValueError:
+                ideal = None
+
+            codDisc = input("Código da disciplina (ou deixe em branco): ").strip() or None
+            nomeDisc = input("Nome da disciplina (ou deixe em branco): ").strip() or None
+
+            functionsUSP.data_course(
+                all_units,
+                courseName=nome,
+                unitName=unidade,
+                minDuration=minDur,
+                maxDuration=maxDur,
+                idealDuration=ideal,
+                code=codDisc,
+                nameSubject=nomeDisc
+            )
+
+        case "3":
+            print("Executando a opção 3....")
+            print("\n--- Dados de todos os cursos ---")
+            functionsUSP.data_all_courses(all_units)
+
+        case "4":
+            print("Executando a opção 4....")
+            print("\n--- Filtros da disciplina ---")
+            code = input("Código (ou deixe em branco): ").strip() or None
+            name = input("Nome da disciplina (ou deixe em branco): ").strip() or None
+
+            try:
+                ch = input("CH (ou pressione Enter para ignorar): ").strip()
+                if ch == "":
+                    ch = None  # considera que o filtro não será aplicado
+            except ValueError:
+                ch = None
+
+            try:
+                ce = input("CE (ou pressione Enter para ignorar): ").strip()
+                if ce == "":
+                    ce = None  # considera que o filtro não será aplicado
+            except ValueError:
+                ce = None
+
+            try:
+                cp = input("CP (ou pressione Enter para ignorar): ").strip()
+                if cp == "":
+                    cp = None  # considera que o filtro não será aplicado
+            except ValueError:
+                cp = None
+
+            try:
+                atpa = input("CH (ou pressione Enter para ignorar): ").strip()
+                if atpa == "":
+                    atpa = None  # considera que o filtro não será aplicado
+            except ValueError:
+                atpa = None
+
+            functionsUSP.data_subject(
+                all_units,
+                code=code,
+                nameSubject=name,
+                ch=ch,
+                ce=ce,
+                cp=cp,
+                atpa=atpa
+            )
+
+        case "5":
+            print("Executando a opção 5....")
+            print("\n--- Disciplinas compartilhadas entre cursos ---")
+            functionsUSP.find_shared_subjects(all_units)
+
+        case "6":
+            print("Executando a opção 6....")
+            print("Encerrando programa. Até logo!")
+            break
+
+        case _:
+            print("Opção inválida! Por favor, tente novamente.")
 
 
 
