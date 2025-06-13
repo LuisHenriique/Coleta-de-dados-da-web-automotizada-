@@ -1,9 +1,9 @@
 # Manual de Utilização do Programa
 
 Integrantes do grupo:
-- Aluno: Luis Henrique Ponciano dos Santos NUSP: 15577760
-- Aluno: Wiltord NUSP:
-- Aluno:         NUSP:
+- Aluno: Luis Henrique Ponciano dos Santos      NUSP: 15577760
+- Aluno: Wiltord    NUSP:
+- Aluno:            NUSP:
 
 Este manual fornece instruções passo a passo para configurar o ambiente, instalar as dependências e executar o programa WebScrapping.
 
@@ -47,12 +47,19 @@ make run
 ```
 Após rodar o programa forneça a quantidades de unidades que serão lidas, após o processo de raspagem de dados da web que será exiba via terminal para ciência do usuário 
 quais dados estão sendo coletados, você verá algo como:
+ <br>
 Selecione uma opção:
+ <br>
 1 - Listar cursos por unidade
+ <br>
 2 - Obter dados de um curso específico
+ <br>
 3 - Obter dados de todos os cursos
+ <br>
 4 - Obter dados de uma disciplina
+ <br>
 5 - Ver disciplinas comuns a vários cursos
+ <br>
 0 - Sair
 
 
@@ -81,10 +88,15 @@ Com este sistema, você pode:
 ### Estrutura de Classes e arquivos
 
 `Unit` (`unit.py`) - Representa uma unidade da USP.
+ <br>
 `Course` (`course.py`) - Representa um curso de graduação.
+ <br>
 `Subject` (`subject.py`) - Representa uma disciplina. 
-`usp` (`usp.py`) -  **Arquivo principal**. Executa a raspagem de dados e após isso exibe uma interface de interação com o usuário via terminal. 
+ <br>
+`usp` (`usp.py`) -  **Arquivo principal**. Executa a raspagem de dados e após isso exibe uma interface de interação com o usuário via terminal.
+ <br>
 `functionsUSP` (`functionsUSP.py`) -  Contém as **funções auxiliares** de scraping e manipulação de dados a qual são utilizadas na interface com o usuário.
+ <br>
 `Makefile` - Executa todos os arquivos e o programa
 
 
