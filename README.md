@@ -4,11 +4,11 @@ Este manual fornece instruções passo a passo para configurar o ambiente, insta
 
 ---
 
-## 🔧 1. Criando um Ambiente Virtual
+## 1. Criando um Ambiente Virtual
 
     
 
-### ▶️ Linux ou macOS
+### Linux ou macOS
 
 Abra o terminal e digite:
 
@@ -24,7 +24,7 @@ Com o ambiente virtual ativado para o linux(Windows não precisa criar ambiente 
 pip install beautifulsoup4 selenium
 ```
 
-### Executar programa
+## 3. Executar programa
 
 Certifique-se de estar no diretório onde estão os arquivos do projeto, utilizando o comando cd (Linux) para encontrar a pasta fonte do projeto
 
