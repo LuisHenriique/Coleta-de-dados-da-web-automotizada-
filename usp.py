@@ -1,6 +1,3 @@
-
-import functionsUSP
-
 """Minhas classes """
 from unit import Unit
 from course import Course
@@ -37,7 +34,7 @@ def processar_tabela(table: Tag, course):
         flagDisciplina = 1
     elif (table.find(string="Disciplinas Optativas Livres")):
         flagDisciplina = 2
-    if (table.find(string="Disciplinas Optativas Eletivas")):
+    elif (table.find(string="Disciplinas Optativas Eletivas")):
         flagDisciplina = 3
 
     for row in rows:
@@ -102,21 +99,52 @@ driver.set_page_load_timeout(25)  # Timeout de 30 segundos para carregar a pági
 
 url = "https://uspdigital.usp.br/jupiterweb/jupCarreira.jsp?codmnu=8275"
 
-try:
-    # acessar url
-    driver.get(url)
+# Tenta abrir a página até 5 vezes
+max_tentativas = 5
+sucesso = False
 
-    # Espera por um elemento específico que indica que a página carregou
-    WebDriverWait(driver, 25).until(
-        EC.presence_of_element_located((By.ID, "comboUnidade"))
-    )
-except TimeoutException:
-    # Se houver erros, tenta recarregar a página
-    driver.refresh()
-    WebDriverWait(driver, 25).until(
-        EC.presence_of_element_located((By.ID, "comboUnidade"))
-    )
 
+for tentativa in range(1, max_tentativas + 1):
+    try:
+        print(f"Tentativa {tentativa} de {max_tentativas} para abrir a página...")
+        driver.get(url)
+        # Dá tempo da página estabilizar
+        time.sleep(3)
+
+
+        # Espera o carregamento do elemento
+        WebDriverWait(driver, 15).until(
+            EC.presence_of_element_located((By.ID, "comboUnidade"))
+        )
+
+        WebDriverWait(driver, 15).until(
+            EC.presence_of_element_located((By.ID, "comboCurso"))
+        )
+
+
+
+        sucesso = True
+        print("Página carregada com sucesso.")
+        break  # Sai do loop se der certo
+
+    except TimeoutException:
+        print(f"Timeout na tentativa {tentativa}. Recarregando a página...")
+        try:
+            driver.refresh()
+            print("Recarregando a página em 2 segundos...")
+            time.sleep(2)  # Espera um pouco antes de tentar novamente
+        except Exception as e:
+            print(f"Erro ao tentar recarregar: {e}")
+            time.sleep(2)
+
+
+
+if not sucesso:
+    print("Não foi possível carregar a página após várias tentativas.")
+    print("Encerrando programa....")
+    exit()
+
+# Cria uma lista de options, que no caso cada options é uma unidade
 selectUnits = Select(driver.find_element(By.ID, "comboUnidade"))
 
 
@@ -136,7 +164,7 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
 
 
 
-    print(f"Selecionando unidade: {unitName} (valor={unitValue})")
+    print(f"\nSelecionando unidade: {unitName} (valor={unitValue})")
 
     # Seleciona a nova unidade
     selectUnits.select_by_value(unitValue)
@@ -147,11 +175,12 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
 
     # Agora sim, re-obtem os cursos
     selectCourse = Select(driver.find_element(By.ID, "comboCurso"))
-
+    course_obj = None
     for course in selectCourse.options[1:]:  # pula primeiro item da lista de options(lista de cursos)
         courseName = course.text
         courseValue = course.get_attribute("value")
-        print(f"Selecionando curso: {courseName} (valor={courseValue})")
+
+        print(f"\nSelecionando curso: {courseName} (valor={courseValue})")
         selectCourse.select_by_value(courseValue)
 
         time.sleep(0.4)
@@ -161,23 +190,24 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
         searchButtonOne.click()
 
         # Cria uma instância do objeto unidade
-        WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.ID, "tabs")))
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.ID, "tabs")))
 
         try:  ## tentar achar o botão de grades
 
             # Espera o overlay de carregamento sumir
-            WebDriverWait(driver, 15).until(
+            WebDriverWait(driver, 20).until(
                 EC.invisibility_of_element_located((By.CLASS_NAME, "blockUI"))
             )
 
-            gradesCurriculum = WebDriverWait(driver, 15).until(
+            gradesCurriculum = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.ID, "step4-tab"))
             )
 
             gradesCurriculum.click()
 
-            # após ter entrada na aba de grades curriculares, espera certa de 2 segundos para sair dela
-            time.sleep(2.5)
+
+            # após ter entrada na aba de grades curriculares, espera certa de 3 segundos para sair dela
+            time.sleep(3)
 
             # obtém o conteúdo html da página
             page_content = driver.page_source
@@ -192,7 +222,7 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
 
 
             # criação da instância do objeto Curso
-            course = Course(courseName, unitName, int(durationIdeal), int(durationMin), int(durationMax))
+            course_obj = Course(courseName, unitName, int(durationIdeal), int(durationMin), int(durationMax))
 
             try:
                 # verifica se o primeiro  os links presentes na tabela de disciplinas está disponível, se não estiver cai no execept
@@ -207,14 +237,14 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
                 # raspando os dados das linhas(tr) da  tabela 1 que tenham esse style
 
                 for table in tables:
-                    processar_tabela(table, course)
+                    processar_tabela(table,course_obj)
                 time.sleep(2)
             except:
                 raise ValueError("Erro ao tentar processar tabela de disciplinas ")
 
             finally:
-                #imprime o estado atual do course
-                course.status_course()
+                #imprime o estado atual do course_obj
+                course_obj.status_course()
 
                 #Procura o botão de buscar e clica nele
                 button_buscar(driver)
@@ -222,7 +252,7 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
         except:
 
             # criação da instância do objeto Curso apenas, pois ele não possui dados a mais.
-            course = Course(courseName, unitName)
+            course_obj = Course(courseName, unitName)
 
             # se não achou procura o botão de voltar
             closeButton = WebDriverWait(driver, 30).until(
@@ -233,7 +263,7 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
 
         finally:
             #insere os cursos na lista de cursos da unidade respectiva
-            current_unit.add_courses(course)
+            current_unit.add_courses(course_obj)
 
     # decrementa a quantidade de unidades
     quantityUnits-=1
@@ -261,13 +291,15 @@ while True:
 
 
         case "1":
-            print("Executando a opção 1....")
+            print("\nExecutando a opção 1....")
 
             print("\n--- Lista de cursos por unidades ---")
+            print()
+
             functionsUSP.print_all_courses(all_units)
 
         case "2":
-            print("Executando a opção 2....")
+            print("\nExecutando a opção 2....")
 
             print("\n--- Filtros do curso ---")
             nome = input("Digite o nome do curso (ou deixe em branco): ").strip() or None
@@ -294,60 +326,72 @@ while True:
             codDisc = input("Código da disciplina (ou deixe em branco): ").strip() or None
             nomeDisc = input("Nome da disciplina (ou deixe em branco): ").strip() or None
 
+
+            print(f"\nfiltros selecionados: ({unidade if unidade != None else "-"}, {nome if nome != None else "-"}, {minDur if minDur != None else "-"}, {maxDur if maxDur != None else "-"}, {ideal if ideal != None else "-"}, {codDisc if codDisc != None else "-"}, {nomeDisc if nomeDisc != None else "-"})  *Obs:(-) filtros não utilizados ")
+            print()
+
             functionsUSP.data_course(
                 all_units,
-                courseName=nome,
                 unitName=unidade,
+                courseName=nome,
                 minDuration=minDur,
                 maxDuration=maxDur,
                 idealDuration=ideal,
-                code=codDisc,
-                nameSubject=nomeDisc
+                subjectCode=codDisc,
+                subjectName=nomeDisc
             )
 
         case "3":
-            print("Executando a opção 3....")
+            print("\nExecutando a opção 3....")
             print("\n--- Dados de todos os cursos ---")
+            print()
+
             functionsUSP.data_all_courses(all_units)
 
         case "4":
-            print("Executando a opção 4....")
+            print("\nExecutando a opção 4....")
             print("\n--- Filtros da disciplina ---")
             code = input("Código (ou deixe em branco): ").strip() or None
             name = input("Nome da disciplina (ou deixe em branco): ").strip() or None
 
             try:
-                ch = input("CH (ou pressione Enter para ignorar): ").strip()
-                if ch == "":
-                    ch = None  # considera que o filtro não será aplicado
+                creditsClass = int(input("Créd. Aulas (ou pressione Enter para ignorar): ").strip())
+                creditsClass = creditsClass if creditsClass > 0 else None
+            except ValueError:
+                creditsClass = None
+
+            try:
+                ch = int(input("CH (ou pressione Enter para ignorar): ").strip())
+                ch =  ch if ch > 0 else None
             except ValueError:
                 ch = None
 
             try:
-                ce = input("CE (ou pressione Enter para ignorar): ").strip()
-                if ce == "":
-                    ce = None  # considera que o filtro não será aplicado
+                ce = int(input("CE (ou pressione Enter para ignorar): ").strip())
+                ce = ce if ce > 0 else None
             except ValueError:
                 ce = None
 
             try:
-                cp = input("CP (ou pressione Enter para ignorar): ").strip()
-                if cp == "":
-                    cp = None  # considera que o filtro não será aplicado
+                cp = int(input("CP (ou pressione Enter para ignorar): ").strip())
+                cp = cp if cp > 0 else None
             except ValueError:
                 cp = None
 
             try:
-                atpa = input("CH (ou pressione Enter para ignorar): ").strip()
-                if atpa == "":
-                    atpa = None  # considera que o filtro não será aplicado
+                atpa = int(input("CH (ou pressione Enter para ignorar): ").strip())
+                atpa = atpa if atpa > 0 else None
             except ValueError:
                 atpa = None
 
+
+            print(f"\nfiltros selecionados: ({code if code != None else "-"}, {name if name!=None else "-"}, {creditsClass if creditsClass !=None else "-"}, {ch if ch !=None else "-"}, {ce if ce !=None else "-"}, {cp if cp !=None else "-"}, {atpa if atpa !=None else "-" })  *Obs:(-) filtros não utilizados")
+            print()
             functionsUSP.data_subject(
                 all_units,
                 code=code,
                 nameSubject=name,
+                creditsClass = creditsClass,
                 ch=ch,
                 ce=ce,
                 cp=cp,
@@ -355,17 +399,21 @@ while True:
             )
 
         case "5":
-            print("Executando a opção 5....")
+            print("\nExecutando a opção 5....")
             print("\n--- Disciplinas compartilhadas entre cursos ---")
+            print()
+
             functionsUSP.find_shared_subjects(all_units)
 
         case "6":
-            print("Executando a opção 6....")
+            print("\nExecutando a opção 6....")
             print("Encerrando programa. Até logo!")
+            print()
+
             break
 
         case _:
-            print("Opção inválida! Por favor, tente novamente.")
+            print("\nOpção inválida! Por favor, tente novamente.\n")
 
 
 

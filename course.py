@@ -53,7 +53,7 @@ class Course:
 
 
                 # Filtro por código das disciplinas
-                if 'code' in filters  is not None:
+                if 'code' in filters  and filters['code'] is not None:
                     filterCode = filters['code'].strip().lower()
                     subjectTest  = subject.code.strip().lower()
                     if filterCode not in subjectTest:
@@ -128,26 +128,29 @@ class Course:
         if listSubjects:
             for subj in listSubjects:
                 subj.status_subject()
+                print()
             return
-        print("Nenhuma disciplina encontrada")
+        print("  Nenhuma disciplina encontrada\n")
 
 
     def status_course(self) -> None:
         """Imprime informações do curso"""
-
+        print("-" *100)
         print(
             f"Curso: {self.majorName}\n"
             f"Unidade: {self.unitCampus}\n"
             f"Duração ideal: {self.idealDuration}, "
             f"Duração mínima: {self.minDuration}, "
-            f"Duração máxima: {self.maxDuration}\n"
+            f"Duração máxima: {self.maxDuration}"
         )
+        print("-" *100 + "\n")
 
-        print(f"Disciplinas Obrigatórias ({len(self.listOfMandatorySubjects)}):")
+
+        print(f"- Disciplinas Obrigatórias ({len(self.listOfMandatorySubjects)}):\n")
         self.print_data_subjects(self.listOfMandatorySubjects)
 
-        print(f"\nDisciplinas Optativas Livres ({len(self.listOfOptionalFreeSubjects)}):")
+        print(f"\n- Disciplinas Optativas Livres ({len(self.listOfOptionalFreeSubjects)}):\n")
         self.print_data_subjects(self.listOfOptionalFreeSubjects)
 
-        print(f"\nDisciplinas Optativas Eletivas ({len(self.listOfOptionalElectiveSubjects)}):")
+        print(f"\n- Disciplinas Optativas Eletivas ({len(self.listOfOptionalElectiveSubjects)}):\n")
         self.print_data_subjects(self.listOfOptionalElectiveSubjects)

@@ -34,10 +34,15 @@ add_courses
                 courseName: str
                 minDuration: str
                 maxDuration: str
+                idealDuration: str
                 subjectCode: str
                 subjectName: str
                 
             """
+
+        # Verifica se TODOS os filtros são None
+        if all(value is None for value in filters.values()):
+            return []  # Nenhum critério fornecido, retorna lista vazia
 
         matchingCourses = []
 
@@ -71,12 +76,17 @@ add_courses
 
             # Filtro por duração mínima
             if 'minDuration' in filters and filters['minDuration']  is not None:
-                if int(course.minDuration) < filters['minDuration']:
+                if course.minDuration < filters['minDuration']:
                     matches = False
 
             # Filtro por duração máxima
             if 'maxDuration' in filters  and filters['maxDuration'] is not None:
-                if int(course.maxDuration) > filters['maxDuration']:
+                if course.maxDuration > filters['maxDuration']:
+                    matches = False
+
+            # Filtro por duração ideal
+            if 'idealDuration' in filters and filters['idealDuration'] is not None:
+                if course.idealDuration > filters['idealDuration']:
                     matches = False
 
             # Filtro por código da disciplina (subjectCode)

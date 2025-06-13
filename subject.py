@@ -14,4 +14,4 @@ class Subject:
 
 
     def status_subject(self):
-        print(f"{self.code} | {self.nameSubject} | {self.creditsClass} | {self.creditsWorkClass} | {self.ch} | {self.ce} | {self.cp} | {self.atpa}")
+        print(f"  Código disciplina: {self.code} | Nome disciplina: {self.nameSubject} | Créditos Aulas: {self.creditsClass} | Crédito Trabalho: {self.creditsWorkClass} | Carga horária: {self.ch} |  Carga horária de Estágio: {self.ce} | Carga horária de Práticas como Componentes Curriculares: {self.cp} | Atividades Teórico-Práticas de Aprofundamento: {self.atpa}")

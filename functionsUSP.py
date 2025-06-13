@@ -4,8 +4,8 @@ from collections import defaultdict
 def print_all_courses(all_units):
     for unit in all_units:
         print(f"\nUnidade: {unit.name}")
-        print("Cursos oferecidos: ")
         courses = unit.get_all_courses()
+        print(f"Cursos oferecidos - quantidade de cursos [{len(courses)}] :\n")
 
         # Se lista diferente de vazia então imprime
         if courses:
@@ -22,19 +22,20 @@ def data_course(all_units, **filters):
 
         # Forma uma lista de cursos que atende o critério estabelecido
         courses = unit.get_courses(**filters)
-        # se lista é diferente de vazia
-        if courses:
-            # for que itera na lista dos cursos e imprime seus dados
-            for course in courses:
-                course.status_course()
-                found = True
-                print()
+        # se lista é de vazia
+        if not courses:
+            continue
+        # for que itera na lista dos cursos e imprime seus dados
+        for course in courses:
+            course.status_course()
+            found = True
+            print()
 
 
     if not found:
         # Mostra o nome se estiver no filtro, senão mostra "filtros aplicados"
-        nameCourse = filters.get("courseName", "com os filtros aplicados")
-        print(f"Curso '{nameCourse}' não encontrado em nenhuma unidade.")
+
+        print(f"Os dados deste curso não foi encontrado em nenhuma unidade.")
 
 
 # Função que retorna os dados de todos os cursos armazenados na lista de cursos de cada unidade
@@ -48,6 +49,7 @@ def  data_all_courses(all_units):
 
 
 
+
 # Função responsável por retornar os dados de uma determina disciplina e seus respectivos cursos
 def data_subject (all_units, **filters):
     found = False
@@ -58,14 +60,16 @@ def data_subject (all_units, **filters):
             for course in courses:
                 subj = course.get_subjects(**filters)
                 if subj:
-                    print(f"\nCurso: {course.majorName}")
+                    print("-"*110)
+                    print(f"Curso: {course.majorName}\n")
                     subj.status_subject()
+                    print("-"*110 + "\n")
+
                     found = True
 
     if not found:
         # Mostra o nome se estiver no filtro, senão mostra "filtros aplicados"
-        subjectName = filters.get("nameSubject", "com os filtros aplicados")
-        print(f"Disciplina '{subjectName}' não encontrada em nenhum curso.")
+        print(f"Disciplina  não encontrada em nenhum curso.")
 
 
 # Função responsável por coletar disciplinas a qual são compartilhadas em mais de um curso
@@ -85,10 +89,18 @@ def find_shared_subjects(all_units):
 
 
     shared = {  key: courses for key, courses in mapa.items() if len(courses) > 1}
-
+    strPrint = "-" * 110
     for (cod, nameSubj), cursos in shared.items():
-        cursos_str = ", ".join(cursos)
-        print(f"Disciplina: [ {cod} | {nameSubj} ] está presente nos cursos: ( | {cursos_str} )\n")
+        cursos_str = "\n - ".join(cursos)
+
+        print(f"\n{strPrint}\n"
+              f"Disciplina: [ {cod} | {nameSubj} ] está presente nos cursos: \n{strPrint}\n - {cursos_str}\n")
+
+
+
+
+
+
 
 
 
