@@ -60,7 +60,7 @@ Selecione uma opção:
  <br>
 5 - Ver disciplinas comuns a vários cursos
  <br>
-0 - Sair
+6 - Encerrar programa
 
 
 
