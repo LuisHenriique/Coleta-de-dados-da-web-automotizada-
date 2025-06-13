@@ -45,8 +45,7 @@ Para rodar o programa:
 make
 make run
 ```
-Após rodar o programa forneça a quantidades de unidades que serão lidas, após o processo de raspagem de dados da web que será exiba via terminal para ciência do usuário 
-quais dados estão sendo coletados, você verá algo como:
+Após rodar o programa forneça a quantidades de unidades que serão lidas, após o processo de raspagem de dados da web ser executada, que no caso durante a execução será exibida via terminal quais dados estão sendo coletados da web para ciência do usuário, você verá algo como:
  <br>
 Selecione uma opção:
  <br>
