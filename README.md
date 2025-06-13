@@ -1,9 +1,9 @@
 # Manual de Utilização do Programa
 
 Integrantes do grupo:
-Aluno: Luis Henrique Ponciano dos Santos NUSP: 15577760
-Aluno: Wiltord NUSP:
-Aluno:         NUSP:
+- Aluno: Luis Henrique Ponciano dos Santos NUSP: 15577760
+- Aluno: Wiltord NUSP:
+- Aluno:         NUSP:
 
 Este manual fornece instruções passo a passo para configurar o ambiente, instalar as dependências e executar o programa WebScrapping.
 
