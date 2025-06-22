@@ -1,9 +1,22 @@
-"""Minhas classes """
+"""
+Script principal executável para o projeto de Web Scraper da USP.
+
+Este script executa duas funções primárias:
+1.  Raspagem de Dados (Web Scraping): Inicia um navegador Chrome controlado
+    pelo Selenium para navegar no site Júpiter Web da USP. Ele itera
+    sistematicamente através das unidades e seus cursos, analisando o HTML
+    com BeautifulSoup para extrair dados sobre cada curso e suas disciplinas.
+2.  Interação com o Usuário: Após a conclusão da raspagem, apresenta um menu
+    de linha de comando que permite ao usuário consultar os dados coletados
+    de várias maneiras.
+"""
+# Imports de classes locais
 from unit import Unit
 from course import Course
 import functionsUSP
 from subject import Subject
 
+# Imports de bibliotecas de terceiros
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select, WebDriverWait
@@ -14,21 +27,24 @@ from bs4.element import Tag
 import time
 
 
-
 def processar_tabela(table: Tag, course):
     """
-    Processa uma única tabela HTML do BeautifulSoup
+     Processa uma tabela HTML contendo as disciplinas de um curso.
 
+    Função responsável por extrair os dados de disciplinas de uma tabela HTML (obtida via BeautifulSoup),
+    identificar o tipo de disciplina (Obrigatória, Optativa Livre ou Optativa Eletiva),
+    criar objetos da classe Subject e inseri-los no curso correspondente.
     """
     if not isinstance(table, Tag):
         raise TypeError("O argumento deve ser um objeto bs4.element.Tag")
 
-    # pega as linhas da tabela atual
+    # Captura todas as linhas da tabela com o estilo específico de linha de disciplina
     rows = table.find_all('tr', style=lambda s: s and "height: 20px" in s and "background-color" not in s)
 
     if not rows:
         raise ValueError("Nenhuma linha válida encontrada na tabela")
 
+    # Determina o tipo de disciplina com base no texto encontrado na tabela
     flagDisciplina = 0
     if (table.find(string="Disciplinas Obrigatórias")):
         flagDisciplina = 1
@@ -37,11 +53,12 @@ def processar_tabela(table: Tag, course):
     elif (table.find(string="Disciplinas Optativas Eletivas")):
         flagDisciplina = 3
 
+    # Para cada linha, cria um objeto Subject e insere no curso
     for row in rows:
         # procura as colunas da linha
         cells = row.find_all('td')
 
-        if len(cells) >= 8:  # Ajuste conforme o número de colunas esperado
+        if len(cells) >= 8:   # Garante que a linha tenha ao menos 8 colunas
             codeSubject = cells[0].get_text(strip=True)
             nameSubject = cells[1].get_text(strip=True)
             creditClass = cells[2].get_text(strip=True) or "0"
@@ -51,7 +68,6 @@ def processar_tabela(table: Tag, course):
             cp = cells[6].get_text(strip=True) or "0"
             atpa = cells[7].get_text(strip=True) or "0"
             subjectRead = Subject(codeSubject, nameSubject, creditClass, credTrab, ch, ce, cp, atpa)
-
 
             course.insert_subject(subjectRead, flagDisciplina)
 
@@ -67,18 +83,25 @@ def setup_driver():
     return webdriver.Chrome(options=options)
 
 def button_buscar(driver):
+    """
+    Clica no botão de busca (etapa 1) na interface do JupiterWeb.
+    Esta função aguarda o carregamento dos elementos necessários antes de realizar o clique.
+    """
     searchButtonTwo = WebDriverWait(driver, 40).until(
         EC.element_to_be_clickable((By.ID, "step1-tab"))
     )
 
+    time.sleep(1.2)
     searchButtonTwo.click()
-
+    
+    # Aguarda o carregamento da lista de unidades após o clique
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, "comboUnidade")))
 
 
+# ---------- Início da execução principal ----------
 
-# Ler a quantidade de unidades que serão lidas
+# Lê a quantidade de unidades que o usuário deseja processar
 while True:
 
     try:
@@ -91,28 +114,23 @@ while True:
 # Lista global para armazenar todas as unidades
 all_units = []
 
-
-
 # Inicializa o driver com timeout configurado
 driver = setup_driver()
-driver.set_page_load_timeout(25)  # Timeout de 30 segundos para carregar a página
+driver.set_page_load_timeout(25) 
 
 url = "https://uspdigital.usp.br/jupiterweb/jupCarreira.jsp?codmnu=8275"
 
-# Tenta abrir a página até 5 vezes
+# Tenta abrir a página inicial até 5 vezes em caso de falha
 max_tentativas = 5
 sucesso = False
-
 
 for tentativa in range(1, max_tentativas + 1):
     try:
         print(f"Tentativa {tentativa} de {max_tentativas} para abrir a página...")
         driver.get(url)
-        # Dá tempo da página estabilizar
-        time.sleep(3)
+        time.sleep(3)  # Dá tempo para a página estabilizar
 
-
-        # Espera o carregamento do elemento
+        # Aguarda o carregamento dos menus de unidade e curso
         WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.ID, "comboUnidade"))
         )
@@ -120,9 +138,7 @@ for tentativa in range(1, max_tentativas + 1):
         WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.ID, "comboCurso"))
         )
-
-
-
+        
         sucesso = True
         print("Página carregada com sucesso.")
         break  # Sai do loop se der certo
@@ -144,12 +160,10 @@ if not sucesso:
     print("Encerrando programa....")
     exit()
 
-# Cria uma lista de options, que no caso cada options é uma unidade
+# Captura as unidades disponíveis no site
 selectUnits = Select(driver.find_element(By.ID, "comboUnidade"))
 
-
-# Itera sobre TODAS as unidades (exceto a primeira que é vazia )
-
+# Itera sobre TODAS as unidades (exceto a primeira que é vazia)
 for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(lista de unidades)
     # Para o loop se a quantidade unidades para serem lidas foram atingidas
     if quantityUnits == 0:
@@ -158,24 +172,23 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
     unitName = units.text
     unitValue = units.get_attribute("value")
 
-    #Cria instância do objeto unidade e insere a unidade lista de unidades
+    # Cria uma nova instância de Unit e adiciona à lista global
     current_unit = Unit(name=unitName)
     all_units.append(current_unit)
 
-
-
     print(f"\nSelecionando unidade: {unitName} (valor={unitValue})")
 
-    # Seleciona a nova unidade
+    # Seleciona a unidade no site
     selectUnits.select_by_value(unitValue)
 
-    # Espera até o número de cursos mudar — isso garante que os cursos novos carregaram
+    # Aguarda o carregamento da lista de cursos para a unidade escolhida
     WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.ID, "comboCurso")))
     time.sleep(0.4)
 
-    # Agora sim, re-obtem os cursos
+    # Atualiza a lista de cursos
     selectCourse = Select(driver.find_element(By.ID, "comboCurso"))
-    course_obj = None
+
+    
     for course in selectCourse.options[1:]:  # pula primeiro item da lista de options(lista de cursos)
         courseName = course.text
         courseValue = course.get_attribute("value")
@@ -183,78 +196,75 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
         print(f"\nSelecionando curso: {courseName} (valor={courseValue})")
         selectCourse.select_by_value(courseValue)
 
-        time.sleep(0.4)
 
-        # Após ter selecionada o curso clica no butão buscar
+        # Após selecionar o curso, clica no botão "Buscar"
         searchButtonOne = driver.find_element(By.ID, "enviar")
+        time.sleep(2)
         searchButtonOne.click()
 
-        # Cria uma instância do objeto unidade
+        # Aguarda o carregamento da aba de detalhes do curso
         WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.ID, "tabs")))
 
         try:  ## tentar achar o botão de grades
-
-            # Espera o overlay de carregamento sumir
+            # Espera o overlay de carregamento sumir antes de continuar
             WebDriverWait(driver, 20).until(
                 EC.invisibility_of_element_located((By.CLASS_NAME, "blockUI"))
             )
 
+            # Tenta localizar e clicar na aba "Grade Curricular"
             gradesCurriculum = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.ID, "step4-tab"))
             )
-
+            time.sleep(2) 
             gradesCurriculum.click()
 
 
-            # após ter entrada na aba de grades curriculares, espera certa de 3 segundos para sair dela
-            time.sleep(3)
+            time.sleep(3.2) # Aguarda a aba carregar completamente
 
-            # obtém o conteúdo html da página
+
+            # Captura o conteúdo da página
             page_content = driver.page_source
-
-            # cria um objeto beautifulSoup
             soup = BeautifulSoup(page_content, 'html.parser')
 
-            # captura os dados de duração do curso
+            # Captura os dados de duração do curso
             durationIdeal = soup.find('span', class_="duridlhab").get_text(strip=True)
             durationMin = soup.find('span', class_="durminhab").get_text(strip=True)
             durationMax = soup.find('span', class_="durmaxhab").get_text(strip=True)
 
 
-            # criação da instância do objeto Curso
+            # Cria o objeto Course com os dados de duração
             course_obj = Course(courseName, unitName, int(durationIdeal), int(durationMin), int(durationMax))
 
             try:
-                # verifica se o primeiro  os links presentes na tabela de disciplinas está disponível, se não estiver cai no execept
+                # Verifica se existem links de disciplinas
                 linksDisciplina = soup.find_all("a", class_="disciplina")
 
-                # captura informações da div  que contém as tabelas de disciplinas
+                # Captura a div que contém as tabelas de disciplinas
                 divGradeCurricular = soup.find('div', id="gradeCurricular")
-                # seleciona todas as tabelas presentes na div gradeCurricular, obtenho uma lista de tabelas
+                
+                # Seleciona todas as tabelas presentes na div gradeCurricular, obtenho uma lista de tabelas
                 tables = divGradeCurricular.find_all('table')
 
-
-                # raspando os dados das linhas(tr) da  tabela 1 que tenham esse style
-
+                # Processa cada tabela encontrada (uma por tipo de disciplina)
                 for table in tables:
                     processar_tabela(table,course_obj)
                 time.sleep(2)
+                
             except:
                 raise ValueError("Erro ao tentar processar tabela de disciplinas ")
 
             finally:
-                #imprime o estado atual do course_obj
+                # Imprime o estado completo do curso com as disciplinas coletadas
                 course_obj.status_course()
 
-                #Procura o botão de buscar e clica nele
+                # Volta para o menu de busca de cursos
                 button_buscar(driver)
 
         except:
-
-            # criação da instância do objeto Curso apenas, pois ele não possui dados a mais.
+            # Caso a aba de grades curriculares não exista, cria o curso só com nome e unidade
             course_obj = Course(courseName, unitName)
 
-            # se não achou procura o botão de voltar
+            # Fecha o popup/modal se necessário
             closeButton = WebDriverWait(driver, 30).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[.//text()='Fechar']"))
             )
@@ -262,17 +272,22 @@ for units in selectUnits.options[1:]:  # pula primeiro item da lista de options(
             time.sleep(1)
 
         finally:
-            #insere os cursos na lista de cursos da unidade respectiva
+            # Adiciona o curso na lista de cursos da unidade
             current_unit.add_courses(course_obj)
 
-    # decrementa a quantidade de unidades
+    # Decrementa a quantidade de unidades restantes
     quantityUnits-=1
 
-
-#Finaliza o webScraping
+# Finaliza o WebDriver (fecha o navegador após terminar o scraping)
 driver.quit()
 
-"""Funcionalidades após a coleta de dados da web"""
+"""===================== Menu de Funcionalidades =====================
+
+Após a coleta dos dados de todas as unidades e cursos, o programa entra
+nesta etapa de interação com o usuário, oferecendo um menu com consultas
+e operações sobre os dados armazenados em memória.
+
+"""
 
 while True:
     print("\n" + "=" * 55)
@@ -288,8 +303,7 @@ while True:
     opcao = input("Escolha uma opção: ")
 
     match opcao:
-
-
+        # Opção 1 - Listar cursos por unidade
         case "1":
             print("\nExecutando a opção 1....")
 
@@ -299,6 +313,7 @@ while True:
             functionsUSP.print_all_courses(all_units)
 
         case "2":
+            # Opção 2 - Buscar dados de um curso específico com filtros múltiplos
             print("\nExecutando a opção 2....")
 
             print("\n--- Filtros do curso ---")
@@ -323,9 +338,9 @@ while True:
             except ValueError:
                 ideal = None
 
+             # Filtros por disciplina
             codDisc = input("Código da disciplina (ou deixe em branco): ").strip() or None
             nomeDisc = input("Nome da disciplina (ou deixe em branco): ").strip() or None
-
 
             print(f"\nfiltros selecionados: ({unidade if unidade != None else "-"}, {nome if nome != None else "-"}, {minDur if minDur != None else "-"}, {maxDur if maxDur != None else "-"}, {ideal if ideal != None else "-"}, {codDisc if codDisc != None else "-"}, {nomeDisc if nomeDisc != None else "-"})  *Obs:(-) filtros não utilizados ")
             print()
@@ -342,13 +357,14 @@ while True:
             )
 
         case "3":
+            # Opção 3 - Exibir todos os cursos coletados
             print("\nExecutando a opção 3....")
             print("\n--- Dados de todos os cursos ---")
             print()
-
             functionsUSP.data_all_courses(all_units)
 
         case "4":
+            # Opção 4 - Buscar dados de uma disciplina específica (com vários filtros)
             print("\nExecutando a opção 4....")
             print("\n--- Filtros da disciplina ---")
             code = input("Código (ou deixe em branco): ").strip() or None
@@ -399,6 +415,7 @@ while True:
             )
 
         case "5":
+            # Opção 5 - Exibir disciplinas compartilhadas entre vários cursos
             print("\nExecutando a opção 5....")
             print("\n--- Disciplinas compartilhadas entre cursos ---")
             print()
@@ -406,6 +423,7 @@ while True:
             functionsUSP.find_shared_subjects(all_units)
 
         case "6":
+            # Opção 6 - Encerrar o programa
             print("\nExecutando a opção 6....")
             print("Encerrando programa. Até logo!")
             print()
@@ -413,6 +431,7 @@ while True:
             break
 
         case _:
+            # Caso o usuário digite uma opção inválida
             print("\nOpção inválida! Por favor, tente novamente.\n")
 
 

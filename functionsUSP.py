@@ -1,45 +1,51 @@
 from collections import defaultdict
 
-#Função que imprime uma lista de cursos por unidade
+# Função que imprime a lista de cursos agrupados por unidade
 def print_all_courses(all_units):
+    """
+    Exibe a lista de cursos organizados por unidade.
+    """
     for unit in all_units:
         print(f"\nUnidade: {unit.name}")
         courses = unit.get_all_courses()
         print(f"Cursos oferecidos - quantidade de cursos [{len(courses)}] :\n")
 
-        # Se lista diferente de vazia então imprime
+        # Se houver cursos, imprime o nome de cada um
         if courses:
             for course in courses:
                 print(f"{course.majorName}")
         print()
 
 
-# Função que retorna os dados de um determinado curso
+# Função que exibe os dados de cursos específicos, de acordo com filtros informados
 def data_course(all_units, **filters):
-# arrumar parametros da minha função
+    """
+    Exibe os dados detalhados de cursos que atendam aos filtros especificados.
+    """
     found = False
     for unit in all_units:
-
-        # Forma uma lista de cursos que atende o critério estabelecido
+        # Obtém os cursos da unidade que satisfazem os filtros
         courses = unit.get_courses(**filters)
-        # se lista é de vazia
+        # Se a unidade não tiver cursos que atendem ao filtro, passa para a próxima
         if not courses:
             continue
-        # for que itera na lista dos cursos e imprime seus dados
+
+        # Exibe os dados de cada curso encontrado
         for course in courses:
             course.status_course()
             found = True
             print()
 
-
     if not found:
-        # Mostra o nome se estiver no filtro, senão mostra "filtros aplicados"
-
+        # Caso nenhum curso atenda os filtros
         print(f"Os dados deste curso não foi encontrado em nenhuma unidade.")
 
 
-# Função que retorna os dados de todos os cursos armazenados na lista de cursos de cada unidade
+# Função que exibe os dados de todos os cursos cadastrados
 def  data_all_courses(all_units):
+    """
+    Exibe os dados detalhados de todos os cursos, de todas as unidades.
+    """
     for unit in all_units:
         # forma uma lista de cursos da respectiva unidade
         courses = unit.get_all_courses()
@@ -47,11 +53,12 @@ def  data_all_courses(all_units):
             for course in courses:
                 course.status_course()
 
-
-
-
-# Função responsável por retornar os dados de uma determina disciplina e seus respectivos cursos
+# Função que exibe os dados de uma disciplina específica, além de indicar em quais cursos ela aparece
 def data_subject (all_units, **filters):
+    """
+    Exibe os detalhes de uma disciplina específica, de acordo com os filtros fornecidos,
+    incluindo os cursos aos quais ela pertence.
+    """
     found = False
     for unit in all_units:
         courses = unit.get_all_courses()
@@ -72,11 +79,16 @@ def data_subject (all_units, **filters):
         print(f"Disciplina  não encontrada em nenhum curso.")
 
 
-# Função responsável por coletar disciplinas a qual são compartilhadas em mais de um curso
+# Função que localiza disciplinas que são compartilhadas entre mais de um curso
 def find_shared_subjects(all_units):
+    """
+    Localiza e exibe disciplinas que aparecem em mais de um curso.
 
-    mapa = defaultdict(set)
+    Para cada disciplina compartilhada, exibe o código, o nome e a lista de cursos onde ela aparece.
+    """
+    mapa = defaultdict(set) # Dicionário onde chave é (codigo, nome) da disciplina e valor é o conjunto de cursos
 
+    # Mapeia todas as disciplinas de todos os cursos
     for unit in all_units:
         courses = unit.get_all_courses()
         for course in courses:
@@ -87,7 +99,7 @@ def find_shared_subjects(all_units):
                 key = (cod, nameSubj)
                 mapa[key].add(course.majorName)
 
-
+    # Filtra apenas as disciplinas presentes em mais de um curso
     shared = {  key: courses for key, courses in mapa.items() if len(courses) > 1}
     strPrint = "-" * 110
     for (cod, nameSubj), cursos in shared.items():

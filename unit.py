@@ -4,45 +4,39 @@ from course import Course
 
 @dataclass
 class Unit:
-    name: str # Nome da unidade
+    # Nome da unidade (exemplo: "IME", "EACH", etc.)
+    name: str 
+    
+    # Lista de cursos oferecidos por essa unidade
     courses: List[Course] = field(default_factory=list) # lista de cursos da respectiva unidade
 
 
     def add_courses(self, course: Course) -> None  :
         """Adiciona um curso para esta unidade se ele não existe já na lista de cursos"""
+        
+        # Verifica se o curso já existe na unidade, comparando pelo nome do curso
         if not any(c.majorName == course.majorName for c in self.courses):
             self.courses.append(course)
         else:
             print(f"Este curso: {course.majorName} já existe nesta unidade {self.name}")
 
     def get_courses(self, **filters) -> List[Course]:
-        """Função que retorna um curso que atendeu os  critérios do filtro encaminhado pelo usuário"""
         """
-            
-            - filters será um dicionário com todos os argumentos nomeados, ou seja um exemplo:
-                # Chamada da função
-                unit.get_courses(unitName="IME", minDuration=4)
-                
-                # Dentro desta função, filters será:
-                # {'unitName': 'IME', 'minDuration': 4}
-add_courses
+        Retorna uma lista de cursos desta unidade que atendem aos critérios de filtro.
 
-            Busca curso com filtros flexíveis.
+        Filtros aceitos:
+            - unitName (str): Nome (ou parte do nome) da unidade.
+            - courseName (str): Nome (ou parte do nome) do curso.
+            - minDuration (int): Duração mínima do curso.
+            - maxDuration (int): Duração máxima do curso.
+            - idealDuration (int): Duração ideal máxima permitida.
+            - subjectCode (str): Código (ou parte) de uma disciplina que o curso possui.
+            - subjectName (str): Nome (ou parte) de uma disciplina que o curso possui.
+        """
 
-            Filtros disponíveis:
-                unitName: str
-                courseName: str
-                minDuration: str
-                maxDuration: str
-                idealDuration: str
-                subjectCode: str
-                subjectName: str
-                
-            """
-
-        # Verifica se TODOS os filtros são None
+        # Se nenhum filtro for informado, retorna lista vazia
         if all(value is None for value in filters.values()):
-            return []  # Nenhum critério fornecido, retorna lista vazia
+            return [] 
 
         matchingCourses = []
 
@@ -50,15 +44,11 @@ add_courses
             matches = True
 
             """
-            Todos os filtros a qual contém strings tals como:  (unitName, courseName, subjectCode, subjectName)
-            usam .strip().lower() para normalizar as comparações ou seja retirando espaços e deixando tudo minúsculo
-            e realizamos a comparação usando o in ou seja permitindo que apenas um trecho do texto já seja suficiente para considerar como correspondência.
-            exemplo: busco "marketing"
-            porém o nome do curso é Marketing - Integral 
-            irar dar match normalmente, bastando que apenas que o será buscado esteja contido no cursoName
+            Observação geral sobre os filtros de texto:
+            - Campos como unitName, courseName, subjectCode e subjectName são tratados de forma case-insensitive
+            - Também são tolerantes a espaços extras.
+            - A correspondência é parcial: exemplo, buscar por "marketing" vai localizar "Marketing - Integral"
             """
-
-
 
             # Filtro por nome da unidade (unitName)
             if 'unitName' in filters  and filters['unitName'] is not None:
@@ -106,7 +96,7 @@ add_courses
             if matches:
                 matchingCourses.append(course)
 
-        #Retorna a lista de cursos que atenderam os critérios do filtro
+        # Retorna a lista de cursos que passaram por todos os filtros
         return matchingCourses
 
     def get_all_courses(self) -> List[Course]:
